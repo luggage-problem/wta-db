@@ -14,6 +14,10 @@ DB_FILE = 'hikes.db'
 
 app = typer.Typer()
 
+##
+## internal methods
+##
+
 def retrieve_hike_urls(): 
     HIKE_LIST_URL = 'https://www.wta.org/go-hiking/@@trailhead-text-search?jsonp_callback=&query=&start=0&num=9999&_=1629843008980'
     response = requests.get(HIKE_LIST_URL)
@@ -29,51 +33,6 @@ def retrieve_hike_html(hike_id):
     response = requests.get(BASE_URL + hike_id)
     return response.text
 
-@app.command()
-def create_db():
-    """
-    Creates sqlite database in local directory and adds all tables.
-    """
-    with open('create_db.sql') as file:
-        with sqlite3.connect(DB_FILE) as con:
-            cursor = con.cursor()
-            cursor.executescript(file.read())
-            con.commit()
-
-@app.command()
-def save_all_hikes():
-    """
-    Scrapes all WTA hike pages and updates or inserts into database where necessary. Can take a while (nearly 4k pages, max rate 1 page / second).
-    """
-    SQL = ''' INSERT INTO HIKE (slug, last_maintained, name, distance, gain, highest_point, stars, num_votes, th_lat, th_long, wta_author, driving_directions, hike_description, last_scraped, location) 
-              VALUES (:hike_id, :last_maintained, :name, :distance, :gain, :highest_point, :stars, :num_votes, :latitude, :longitude, :wta_author, :driving_directions, :hike_description, :last_scraped, :location)
-              ON CONFLICT(slug) DO UPDATE
-              SET slug=:hike_id, last_maintained=:last_maintained, name=:name, distance=:distance, gain=:gain, 
-              highest_point=:highest_point, stars=:stars, num_votes=:num_votes, th_lat=:latitude, th_long=:longitude, 
-              wta_author=:wta_author, driving_directions=:driving_directions,last_scraped=:last_scraped, hike_description=:hike_description, location=:location
-          '''
-    hikes = []
-    all_hike_urls = retrieve_hike_urls()
-    with typer.progressbar(all_hike_urls) as progress:
-        for index, hike in enumerate(progress):
-            # print(str(index+1) + ' out of ' + str(len(all_hike_urls)))
-            # print('(' + hike['name'] + ')')
-            hike = extract_details(hike['id'])
-            with sqlite3.connect(DB_FILE) as con:
-                cursor = con.cursor()
-                cursor.execute(SQL, hike)
-                hike_id = cursor.lastrowid
-                # clear any old features
-                cursor.execute('DELETE FROM feature WHERE hike_id=?', [hike_id])
-                cursor.execute('DELETE FROM alert WHERE hike_id=?', [hike_id])
-                # add current features
-                if 'features' in hike:
-                    for feature in hike['features']:
-                        cursor.execute('INSERT INTO feature (hike_id, type) VALUES (?, ?)', [hike_id, feature])
-                if 'alerts' in hike:
-                    for alert in hike['alerts']:
-                        cursor.execute('INSERT INTO alert (hike_id, type, text) VALUES (?, ?, ?)', [hike_id, alert['type'], alert['text']])
-                con.commit()
 def extract_details(hike_id):
     hike_html = etree.HTML(retrieve_hike_html(hike_id))
     
@@ -179,7 +138,6 @@ def extract_details(hike_id):
     except IndexError:
         pass
 
-    '''
     URL = BASE_URL + hike_id + '/@@related_tripreport_listing'
     
     def get_all_trs():
@@ -242,15 +200,60 @@ def extract_details(hike_id):
         
         return tr
     
-    # get trip reports
-    trs = get_all_trs()
-    print('getting ' + str(len(trs)) + ' TRs...')
-    details['trip_reports'] = [get_tr(url) for url in get_all_trs()]
-    '''
-
-    print()
+    # # get trip reports
+    # trs = get_all_trs()
+    # print('getting ' + str(len(trs)) + ' TRs...')
+    # details['trip_reports'] = [get_tr(url) for url in get_all_trs()]
     
     return details
+
+##
+## user-facing methods
+##
+
+@app.command()
+def create_db():
+    """
+    Creates sqlite database in local directory and adds all tables.
+    """
+    with open('create_db.sql') as file:
+        with sqlite3.connect(DB_FILE) as con:
+            cursor = con.cursor()
+            cursor.executescript(file.read())
+            con.commit()
+
+@app.command()
+def save_all_hikes():
+    """
+    Scrapes all WTA hike pages and updates or inserts into database where necessary. Can take a while (nearly 4k pages, max rate 1 page / second).
+    """
+    SQL = ''' INSERT INTO HIKE (slug, last_maintained, name, distance, gain, highest_point, stars, num_votes, th_lat, th_long, wta_author, driving_directions, hike_description, last_scraped, location) 
+              VALUES (:hike_id, :last_maintained, :name, :distance, :gain, :highest_point, :stars, :num_votes, :latitude, :longitude, :wta_author, :driving_directions, :hike_description, :last_scraped, :location)
+              ON CONFLICT(slug) DO UPDATE
+              SET slug=:hike_id, last_maintained=:last_maintained, name=:name, distance=:distance, gain=:gain, 
+              highest_point=:highest_point, stars=:stars, num_votes=:num_votes, th_lat=:latitude, th_long=:longitude, 
+              wta_author=:wta_author, driving_directions=:driving_directions,last_scraped=:last_scraped, hike_description=:hike_description, location=:location
+          '''
+    hikes = []
+    all_hike_urls = retrieve_hike_urls()
+    with typer.progressbar(all_hike_urls) as progress:
+        for index, hike in enumerate(progress):
+            hike = extract_details(hike['id'])
+            with sqlite3.connect(DB_FILE) as con:
+                cursor = con.cursor()
+                cursor.execute(SQL, hike)
+                hike_id = cursor.lastrowid
+                # clear any old features
+                cursor.execute('DELETE FROM feature WHERE hike_id=?', [hike_id])
+                cursor.execute('DELETE FROM alert WHERE hike_id=?', [hike_id])
+                # add current features
+                if 'features' in hike:
+                    for feature in hike['features']:
+                        cursor.execute('INSERT INTO feature (hike_id, type) VALUES (?, ?)', [hike_id, feature])
+                if 'alerts' in hike:
+                    for alert in hike['alerts']:
+                        cursor.execute('INSERT INTO alert (hike_id, type, text) VALUES (?, ?, ?)', [hike_id, alert['type'], alert['text']])
+                con.commit()
 
 @app.command()
 def washed_out_roads_geojson():
@@ -279,6 +282,3 @@ def washed_out_roads_geojson():
 
 if __name__ == '__main__':
     app()
-
-
-
