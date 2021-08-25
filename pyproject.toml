@@ -2,10 +2,10 @@
 name = "wta_list"
 version = "0.1.0"
 description = ""
-authors = ["Duncan <duncan.mackey@gmail.com>"]
+authors = ["luggage-problem"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.6"
 requests = "^2.26.0"
 lxml = "^4.6.3"
 ipykernel = "^6.2.0"

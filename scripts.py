@@ -14,9 +14,7 @@ DB_FILE = 'hikes.db'
 
 app = typer.Typer()
 
-##
 ## internal methods
-##
 
 def retrieve_hike_urls(): 
     HIKE_LIST_URL = 'https://www.wta.org/go-hiking/@@trailhead-text-search?jsonp_callback=&query=&start=0&num=9999&_=1629843008980'
@@ -201,15 +199,14 @@ def extract_details(hike_id):
         return tr
     
     # # get trip reports
+    # # likely tens of thousands of requests
     # trs = get_all_trs()
     # print('getting ' + str(len(trs)) + ' TRs...')
     # details['trip_reports'] = [get_tr(url) for url in get_all_trs()]
-    
+
     return details
 
-##
 ## user-facing methods
-##
 
 @app.command()
 def create_db():
