@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS hike (
 	wta_author TEXT,
 	driving_directions TEXT,
 	hike_description TEXT,
-	last_scraped TEXT
+	last_scraped TEXT,
+	location TEXT
 );
 
 CREATE TABLE IF NOT EXISTS alert (
