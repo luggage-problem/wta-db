@@ -10,6 +10,7 @@ requests = "^2.26.0"
 lxml = "^4.6.3"
 ipykernel = "^6.2.0"
 jupyter = "^1.0.0"
+typer = "^0.3.2"
 
 [tool.poetry.dev-dependencies]
 
