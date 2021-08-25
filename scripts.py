@@ -30,6 +30,17 @@ def retrieve_hike_html(hike_id):
     return response.text
 
 @app.command()
+def create_db():
+    """
+    Creates sqlite database in local directory and adds all tables.
+    """
+    with open('create_db.sql') as file:
+        with sqlite3.connect(DB_FILE) as con:
+            cursor = con.cursor()
+            cursor.executescript(file.read())
+            con.commit()
+
+@app.command()
 def save_all_hikes():
     """
     Scrapes all WTA hike pages and updates or inserts into database where necessary. Can take a while (nearly 4k pages, max rate 1 page / second).
@@ -62,7 +73,7 @@ def save_all_hikes():
                 if 'alerts' in hike:
                     for alert in hike['alerts']:
                         cursor.execute('INSERT INTO alert (hike_id, type, text) VALUES (?, ?, ?)', [hike_id, alert['type'], alert['text']])
-
+                con.commit()
 def extract_details(hike_id):
     hike_html = etree.HTML(retrieve_hike_html(hike_id))
     
