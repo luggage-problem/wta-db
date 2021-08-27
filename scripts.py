@@ -249,6 +249,8 @@ def save_all_hikes(start_at: int = typer.Option(0, "--start-at", help="ID of row
     all_hike_urls = retrieve_hike_urls()
     with typer.progressbar(all_hike_urls) as progress:
         for index, hike in enumerate(progress):
+            if not hike.get('id'):
+                continue
             if index < start_at:
                 continue
             hike = extract_details(hike['id'])
@@ -269,7 +271,7 @@ def save_all_hikes(start_at: int = typer.Option(0, "--start-at", help="ID of row
                             cursor.execute('INSERT INTO alert (hike_id, type, text) VALUES (?, ?, ?)', [hike_id, alert['type'], alert['text']])
                     con.commit()
             except sqlite3.IntegrityError:
-                print(f'ERROR: Failed to save {hike["id"]} to database.')
+                print(f'ERROR: Failed to save {hike.get("id")} to database.')
                 continue
 
 @app.command()
