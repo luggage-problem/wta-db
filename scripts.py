@@ -250,21 +250,25 @@ def save_all_hikes():
     with typer.progressbar(all_hike_urls) as progress:
         for index, hike in enumerate(progress):
             hike = extract_details(hike['id'])
-            with sqlite3.connect(DB_FILE) as con:
-                cursor = con.cursor()
-                cursor.execute(SQL, hike)
-                hike_id = cursor.lastrowid
-                # clear any old features
-                cursor.execute('DELETE FROM feature WHERE hike_id=?', [hike_id])
-                cursor.execute('DELETE FROM alert WHERE hike_id=?', [hike_id])
-                # add current features
-                if hike.get('features'):
-                    for feature in hike['features']:
-                        cursor.execute('INSERT INTO feature (hike_id, type) VALUES (?, ?)', [hike_id, feature])
-                if hike.get('alerts'):
-                    for alert in hike['alerts']:
-                        cursor.execute('INSERT INTO alert (hike_id, type, text) VALUES (?, ?, ?)', [hike_id, alert['type'], alert['text']])
-                con.commit()
+            try:
+                with sqlite3.connect(DB_FILE) as con:
+                    cursor = con.cursor()
+                    cursor.execute(SQL, hike)
+                    hike_id = cursor.lastrowid
+                    # clear any old features
+                    cursor.execute('DELETE FROM feature WHERE hike_id=?', [hike_id])
+                    cursor.execute('DELETE FROM alert WHERE hike_id=?', [hike_id])
+                    # add current features
+                    if hike.get('features'):
+                        for feature in hike['features']:
+                            cursor.execute('INSERT INTO feature (hike_id, type) VALUES (?, ?)', [hike_id, feature])
+                    if hike.get('alerts'):
+                        for alert in hike['alerts']:
+                            cursor.execute('INSERT INTO alert (hike_id, type, text) VALUES (?, ?, ?)', [hike_id, alert['type'], alert['text']])
+                    con.commit()
+            except sqlite3.IntegrityError:
+                print(f'ERROR: Failed to save {hike["id"]} to database.')
+                continue
 
 @app.command()
 def washed_out_roads_geojson():
