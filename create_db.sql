@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS hike (
 	slug TEXT UNIQUE NOT NULL,
 	last_maintained TEXT,
 	name TEXT NOT NULL,
-	distance TEXT,
+	distance REAL,
 	gain INTEGER,
 	highest_point INTEGER,
 	stars TEXT,

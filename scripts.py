@@ -8,13 +8,22 @@ import sqlite3
 from datetime import date
 import typer
 
-BASE_URL = 'https://www.wta.org/go-hiking/hikes/' # base + <id> for individual page
+BASE_URL = 'https://www.wta.org/go-hiking/hikes/' # base + <hike_id> for individual page
 REQUEST_DELAY = 1
 DB_FILE = 'hikes.db'
 
 app = typer.Typer()
 
 ## internal methods
+
+def normalize_distance(value):
+    if not value:
+        return
+    if 'roundtrip' in value or 'of trails' in value:
+        return value.split(' ')[0]
+    if 'one-way' in value:
+        return float(value.split(' ')[0])*2
+    raise ValueError('Distance value was not formed correctly.')
 
 def retrieve_hike_urls(): 
     HIKE_LIST_URL = 'https://www.wta.org/go-hiking/@@trailhead-text-search?jsonp_callback=&query=&start=0&num=9999&_=1629843008980'
@@ -93,14 +102,19 @@ def extract_details(hike_id):
         pass
     
     try: 
-        details['distance'] = hike_html.xpath('//div[@id="distance"]/span')[0].text
+        details['distance'] = normalize_distance(hike_html.xpath('//div[@id="distance"]/span')[0].text)
     except IndexError:
         pass
         
     try:
         elevation = hike_html.xpath('//div[@class="hike-stat"]/div/span')
-        details['gain'] = elevation[0].text
-        details['highest_point'] = elevation[1].text
+        if 'Highest Point' in ''.join(hike_html.xpath('//div[@class="hike-stat"]/div/text()')) and len(elevation) == 1:
+            details['highest_point'] = elevation[0].text
+        elif 'Gain' in ''.join(hike_html.xpath('//div[@class="hike-stat"]/div/text()')) and len(elevation) == 1:
+            details['gain'] = elevation[0].text
+        else:
+            details['gain'] = elevation[0].text
+            details['highest_point'] = elevation[1].text
     except IndexError:
         pass
         
@@ -276,6 +290,8 @@ def washed_out_roads_geojson():
         }
     with open('washed_out_roads.json', 'w+') as file:
         file.write(json.dumps(washed_out_roads_geojson()))
+
+print(extract_details('meta-lake'))
 
 if __name__ == '__main__':
     app()
