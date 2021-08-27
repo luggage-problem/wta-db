@@ -290,8 +290,6 @@ def washed_out_roads_geojson():
         }
     with open('washed_out_roads.json', 'w+') as file:
         file.write(json.dumps(washed_out_roads_geojson()))
-
-print(extract_details('meta-lake'))
-
+        
 if __name__ == '__main__':
     app()
