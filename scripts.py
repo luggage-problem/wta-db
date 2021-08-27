@@ -234,7 +234,7 @@ def create_db():
             con.commit()
 
 @app.command()
-def save_all_hikes(start_at: int = typer.Option(0, help="ID of row to start at if script was interrupted.")):
+def save_all_hikes(startat: int = typer.Option(0, help="ID of row to start at if script was interrupted.")):
     """
     Scrapes all WTA hike pages and updates or inserts into database where necessary. Can take a while (nearly 4k pages, max rate 1 page / second).
     """
