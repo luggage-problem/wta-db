@@ -9,7 +9,7 @@ from datetime import date
 import typer
 
 BASE_URL = 'https://www.wta.org/go-hiking/hikes/' # base + <hike_id> for individual page
-REQUEST_DELAY = 1
+REQUEST_DELAY = 10
 DB_FILE = 'hikes.db'
 
 app = typer.Typer()
