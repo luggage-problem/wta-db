@@ -258,10 +258,10 @@ def save_all_hikes():
                 cursor.execute('DELETE FROM feature WHERE hike_id=?', [hike_id])
                 cursor.execute('DELETE FROM alert WHERE hike_id=?', [hike_id])
                 # add current features
-                if 'features' in hike:
+                if hike.get('features'):
                     for feature in hike['features']:
                         cursor.execute('INSERT INTO feature (hike_id, type) VALUES (?, ?)', [hike_id, feature])
-                if 'alerts' in hike:
+                if hike.get('alerts'):
                     for alert in hike['alerts']:
                         cursor.execute('INSERT INTO alert (hike_id, type, text) VALUES (?, ?, ?)', [hike_id, alert['type'], alert['text']])
                 con.commit()
@@ -290,6 +290,6 @@ def washed_out_roads_geojson():
         }
     with open('washed_out_roads.json', 'w+') as file:
         file.write(json.dumps(washed_out_roads_geojson()))
-        
+
 if __name__ == '__main__':
     app()
