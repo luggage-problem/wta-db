@@ -234,7 +234,7 @@ def create_db():
             con.commit()
 
 @app.command()
-def save_all_hikes():
+def save_all_hikes(start_at: int = typer.Option(0, help="ID of row to start at if script was interrupted.")):
     """
     Scrapes all WTA hike pages and updates or inserts into database where necessary. Can take a while (nearly 4k pages, max rate 1 page / second).
     """
@@ -249,6 +249,8 @@ def save_all_hikes():
     all_hike_urls = retrieve_hike_urls()
     with typer.progressbar(all_hike_urls) as progress:
         for index, hike in enumerate(progress):
+            if index < start_at:
+                continue
             hike = extract_details(hike['id'])
             try:
                 with sqlite3.connect(DB_FILE) as con:
